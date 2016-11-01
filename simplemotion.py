@@ -28,8 +28,6 @@ while True:
 	# grab the current frame and initialize the occupied/unoccupied
 	# text
 	(grabbed, frame) = camera.read()
-	text = "Unoccupied"
-
 	# if the frame could not be grabbed, then we have reached the end
 	# of the video
 	if not grabbed:
