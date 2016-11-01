@@ -9,8 +9,8 @@ def main(passwd):
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 
-    #the spec is for my webcam, the IP camera is 1080x1920
-    out = cv2.VideoWriter('output.avi',fourcc, 20.0, (848,480))
+    #webcam is 848x480, the IP camera is 1080x1920
+    #out = cv2.VideoWriter('output.avi',fourcc, 20.0, (848,480))
     out = cv2.VideoWriter('output.avi',fourcc, 20.0, (1920,1080))
 
     while(cap.isOpened()):
