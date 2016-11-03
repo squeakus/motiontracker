@@ -39,6 +39,10 @@ if conf["use_dropbox"]:
 
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
+camera.start_preview()
+sleep(10)
+camera.stop_preview()
+
 camera.resolution = tuple(conf["resolution"])
 camera.framerate = conf["fps"]
 rawCapture = PiRGBArray(camera, size=tuple(conf["resolution"]))
