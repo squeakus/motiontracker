@@ -1,3 +1,4 @@
+from __future__ import print_function
 # import the necessary packages
 from tempimage import TempImage
 from dropbox.client import DropboxOAuth2FlowNoRedirect

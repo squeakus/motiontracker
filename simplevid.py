@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import cv2
 import sys
@@ -6,7 +7,7 @@ import sys
 def main(passwd):
     cap = cv2.VideoCapture('rtsp://admin:'+passwd+'@192.168.1.100:554')
 
-    print "video", cap.isOpened()
+    print("video", cap.isOpened())
     while(cap.isOpened()):
         # Capture frame-by-frame
         ret, frame = cap.read()
