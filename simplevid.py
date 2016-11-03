@@ -1,17 +1,20 @@
 from __future__ import print_function
 import numpy as np
+import imutils
 import cv2
 import sys
 
 
 def main(passwd):
     cap = cv2.VideoCapture('rtsp://admin:'+passwd+'@192.168.1.100:554')
-
+    cap.set(cv2.CAP_PROP_FPS,10)
     print("video", cap.isOpened())
     while(cap.isOpened()):
         # Capture frame-by-frame
         ret, frame = cap.read()
-
+        #reduce image size for rpi
+        
+        frame = imutils.resize(frame, width=640)
         # Our operations on the frame come here
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 

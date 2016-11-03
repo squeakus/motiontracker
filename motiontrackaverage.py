@@ -34,9 +34,9 @@ def main(passwd):
 
 
         if avg is None:
-    		print("[INFO] starting background model...")
-    		avg = gray.copy().astype("float")
-    		continue
+    	    print("[INFO] starting background model...")
+    	    avg = gray.copy().astype("float")
+    	    continue
 
         cv2.accumulateWeighted(gray, avg, 0.5)
         frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))

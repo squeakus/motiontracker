@@ -40,24 +40,6 @@ if conf["use_dropbox"]:
 
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
-camera.start_preview()
-sleep(10)
-camera.stop_preview()
-
-camera.resolution = tuple(conf["resolution"])
-camera.framerate = conf["fps"]
-rawCapture = PiRGBArray(camera, size=tuple(conf["resolution"]))
-
-# allow the camera to warmup, then initialize the average frame, last
-# uploaded timestamp, and frame motion counter
-print("[INFO] warming up...")
-time.sleep(conf["camera_warmup_time"])
-avg = None
-lastUploaded = datetime.datetime.now()
-motionCounter = 0
-
-# initialize the camera and grab a reference to the raw camera capture
-camera = PiCamera()
 camera.resolution = tuple(conf["resolution"])
 camera.framerate = conf["fps"]
 rawCapture = PiRGBArray(camera, size=tuple(conf["resolution"]))
@@ -76,7 +58,7 @@ for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True
 	# the timestamp and occupied/unoccupied text
 	frame = f.array
 	timestamp = datetime.datetime.now()
-	text = "Unoccupied"
+	text = "Clear"
 
 	# resize the frame, convert it to grayscale, and blur it
 	frame = imutils.resize(frame, width=500)
@@ -101,7 +83,7 @@ for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True
 	thresh = cv2.threshold(frameDelta, conf["delta_thresh"], 255,
 		cv2.THRESH_BINARY)[1]
 	thresh = cv2.dilate(thresh, None, iterations=2)
-	(cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+	(_, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 
 	# loop over the contours
@@ -124,7 +106,7 @@ for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True
 		0.35, (0, 0, 255), 1)
 
 	# check to see if the room is occupied
-	if text == "Occupied":
+	if text == "Movement":
 		# check to see if enough time has passed between uploads
 		if (timestamp - lastUploaded).seconds >= conf["min_upload_seconds"]:
 			# increment the motion counter
