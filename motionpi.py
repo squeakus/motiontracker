@@ -5,6 +5,7 @@ from dropbox.client import DropboxOAuth2FlowNoRedirect
 from dropbox.client import DropboxClient
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+from time import sleep
 import argparse
 import warnings
 import datetime
