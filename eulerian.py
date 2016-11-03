@@ -2,7 +2,7 @@ from eularian_magnification.base import eulerian_magnification, show_frequencies
 import sys
 
 #whats the frequency kenneth
-
+# fix the output /usr/local/lib/python3.5/dist-packages/eularian_magnification
 def main(filename):
     show_frequencies(filename)
     eulerian_magnification(filename, image_processing='gaussian',
