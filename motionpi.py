@@ -35,7 +35,7 @@ if conf["use_dropbox"]:
 	# finish the authorization and grab the Dropbox client
 	(accessToken, userID) = flow.finish(authCode)
 	client = DropboxClient(accessToken)
-	print("[SUCCESS] dropbox account linked)
+	print("[SUCCESS] dropbox account linked")
 
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
