@@ -10,7 +10,7 @@ import time
 
 def main(passwd):
     camera = cv2.VideoCapture('rtsp://admin:' + passwd + '@192.168.1.100:554')
-    min_area = 500
+    min_area = 1000
 
     # divx encoding
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')

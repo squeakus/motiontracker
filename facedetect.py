@@ -14,7 +14,6 @@ import numpy as np
 import cv2
 
 # local modules
-from video import create_capture
 from common import clock, draw_str
 
 
@@ -40,13 +39,12 @@ if __name__ == '__main__':
     except:
         video_src = 0
     args = dict(args)
-    cascade_fn = args.get('--cascade', "../../data/haarcascades/haarcascade_frontalface_alt.xml")
-    nested_fn  = args.get('--nested-cascade', "../../data/haarcascades/haarcascade_eye.xml")
+    cascade_fn = args.get('--cascade', "haarcascade_frontalface_alt.xml")
+    nested_fn  = args.get('--nested-cascade', "haarcascade_eye.xml")
 
     cascade = cv2.CascadeClassifier(cascade_fn)
     nested = cv2.CascadeClassifier(nested_fn)
-
-    cam = create_capture(video_src, fallback='synth:bg=../data/lena.jpg:noise=0.05')
+    cam = cv2.VideoCapture(video_src)
 
     while True:
         ret, img = cam.read()
