@@ -10,6 +10,7 @@ USAGE:
 # Python 2/3 compatibility
 from __future__ import print_function
 from imutils.video import VideoStream
+import imutils
 import argparse
 import numpy as np
 import cv2
@@ -31,9 +32,6 @@ def draw_rects(img, rects, color):
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
 
 if __name__ == '__main__':
-    import sys, getopt
-    print(__doc__)
-
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--picamera", type=int, default=-1,
     	help="whether or not the Raspberry Pi camera should be used")
@@ -48,14 +46,14 @@ if __name__ == '__main__':
     nested = cv2.CascadeClassifier(nested_fn)
 
     # initialize the video stream and allow the cammera sensor to warmup
-    #cam = VideoStream(usePiCamera=args["picamera"] > 0).start()
-    #time.sleep(2.0)
+    cam = VideoStream(usePiCamera=args["picamera"] > 0).start()
+    time.sleep(2.0)
 
-    cam = cv2.VideoCapture(0)
+    #cam = cv2.VideoCapture(0)
 
     while True:
         img = cam.read()
-        img = img[1]
+        img = imutils.resize(img, width=400)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)
 
