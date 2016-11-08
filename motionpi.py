@@ -31,7 +31,7 @@ if conf["use_dropbox"]:
 	# connect to dropbox and start the session authorization process
 	flow = DropboxOAuth2FlowNoRedirect(conf["dropbox_key"], conf["dropbox_secret"])
 	print("[INFO] Authorize this application: {}".format(flow.start()))
-	authCode = raw_input("Enter auth code here: ").strip()
+	authCode = input("Enter auth code here: ").strip()
 
 	# finish the authorization and grab the Dropbox client
 	(accessToken, userID) = flow.finish(authCode)
