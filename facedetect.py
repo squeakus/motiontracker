@@ -9,10 +9,11 @@ USAGE:
 
 # Python 2/3 compatibility
 from __future__ import print_function
-
+from imutils.video import VideoStream
+import argparse
 import numpy as np
 import cv2
-
+import time
 # local modules
 from common import clock, draw_str
 
@@ -33,21 +34,28 @@ if __name__ == '__main__':
     import sys, getopt
     print(__doc__)
 
-    args, video_src = getopt.getopt(sys.argv[1:], '', ['cascade=', 'nested-cascade='])
-    try:
-        video_src = video_src[0]
-    except:
-        video_src = 0
-    args = dict(args)
-    cascade_fn = args.get('--cascade', "haarcascade_frontalface_alt.xml")
-    nested_fn  = args.get('--nested-cascade', "haarcascade_eye.xml")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", "--picamera", type=int, default=-1,
+    	help="whether or not the Raspberry Pi camera should be used")
+    args = vars(ap.parse_args())
+
+    #args, video_src = getopt.getopt(sys.argv[1:], '', ['cascade=', 'nested-cascade='])
+
+    cascade_fn = "haarcascade_frontalface_alt.xml"
+    nested_fn  = 'haarcascade_eye.xml'
 
     cascade = cv2.CascadeClassifier(cascade_fn)
     nested = cv2.CascadeClassifier(nested_fn)
-    cam = cv2.VideoCapture(video_src)
+
+    # initialize the video stream and allow the cammera sensor to warmup
+    #cam = VideoStream(usePiCamera=args["picamera"] > 0).start()
+    #time.sleep(2.0)
+
+    cam = cv2.VideoCapture(0)
 
     while True:
-        ret, img = cam.read()
+        img = cam.read()
+        img = img[1]
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)
 
