@@ -3,21 +3,28 @@ import numpy as np
 import cv2
 import sys
 import imutils
-
+from imutils.video import VideoStream
+import argparse
+import time
 
 def main():
-    #cap = cv2.VideoCapture('rtsp://admin:'+passwd+'@192.168.1.100:554')
-    cap = cv2.VideoCapture(0)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", "--picamera", type=int, default=-1,
+        	help="whether or not the Raspberry Pi camera should be used")
+    args = vars(ap.parse_args())
+    cap = VideoStream(usePiCamera=args["picamera"] > 0).start()
+    print("letting camera warm up")
+    time.sleep(2.0)
+
     detector =  cv2.ORB_create()
     img = None
-
-    print("video", cap.isOpened())
     framecnt = 0
 
     while(True):
         framecnt += 1
-        ret, frame = cap.read()
+        frame = cap.read()
         frame = imutils.resize(frame, width=640)
+
         framecnt = 0
 
         # Our operations on the frame come here
@@ -37,8 +44,4 @@ def main():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 1:
-        print ("Usage %s" % sys.argv[0])
-        sys.exit(1)
-
     main()
