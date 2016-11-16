@@ -37,7 +37,7 @@ def main():
             break
 
     # When everything done, release the capture
-    cap.release()
+    cap.stop()
     cv2.destroyAllWindows()
 
 

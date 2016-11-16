@@ -75,4 +75,5 @@ if __name__ == '__main__':
 
         if 0xFF & cv2.waitKey(5) == 27:
             break
+    cam.stop()
     cv2.destroyAllWindows()
