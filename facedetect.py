@@ -47,6 +47,7 @@ if __name__ == '__main__':
 
     # initialize the video stream and allow the cammera sensor to warmup
     cam = VideoStream(usePiCamera=args["picamera"] > 0).start()
+    print("letting camera warm up")
     time.sleep(2.0)
 
     #cam = cv2.VideoCapture(0)
