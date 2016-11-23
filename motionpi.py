@@ -1,6 +1,5 @@
 from __future__ import print_function
 # import the necessary packages
-from tempimage import TempImage
 from dropbox.client import DropboxOAuth2FlowNoRedirect
 from dropbox.client import DropboxClient
 from picamera.array import PiRGBArray
