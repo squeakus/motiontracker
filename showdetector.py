@@ -11,17 +11,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--picamera", type=int, default=-1,
         	help="whether or not the Raspberry Pi camera should be used")
-    ap.add_argument("-d", "--detector", default=None,
+    ap.add_argument("-d", "--detector", required=True,
         	help="choose detector: sift, surf, orb, akaze, brisk")
     args = vars(ap.parse_args())
 
     #set up detector
     detstr = args["detector"]
-    if detstr == None:
-        print("you must specify the detector: python showdetector.py -d sift")
-        exit()
-    else:
-        print("Using", detstr, "for feature detection")
+    print("Using", detstr, "for feature detection")
 
     if detstr == 'sift':
         detector = cv2.xfeatures2d.SIFT_create()

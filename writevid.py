@@ -6,7 +6,7 @@ cap = cv2.VideoCapture(0)
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 
-#the spec is for my webcam, the IP camera is 1080x1920
+#the spec is for my webcam, the IP camera is 1920x1080
 out = cv2.VideoWriter('output.avi',fourcc, 20.0, (848,480))
 
 while(cap.isOpened()):
