@@ -6,10 +6,11 @@ MOSSE tracking sample
 This sample implements correlation-based tracking approach, described in [1].
 
 Usage:
-  mosse.py [--pause] [<video source>]
+  mosse.py  [<video source>] [--pause] [--picam]
 
   --pause  -  Start with playback paused at the first video frame.
               Useful for tracking target selection.
+  --picam  -  Use this flag if using raspberry pi
 
   Draw rectangles around objects with a mouse to track them.
 
@@ -24,15 +25,18 @@ Keys:
 # Python 2/3 compatibility
 from __future__ import print_function
 import sys
+import argparse
+import imutils
+import cv2
+import time
+import numpy as np
+from imutils.video import VideoStream
+from common import draw_str, RectSelector
+
 PY3 = sys.version_info[0] == 3
 
 if PY3:
     xrange = range
-
-import numpy as np
-import cv2
-from common import draw_str, RectSelector
-import video
 
 def rnd_warp(a):
     h, w = a.shape[:2]
@@ -145,16 +149,25 @@ class MOSSE:
         self.H[...,1] *= -1
 
 class App:
-    def __init__(self, video_src, paused = False):
-        self.cap = video.create_capture(video_src)
+    def __init__(self, cap, paused = False):
+        self.cap = cap
         _, self.frame = self.cap.read()
+        self.frameh, self.framew, _ = self.frame.shape
+        self.frame = imutils.resize(self.frame,
+                               width=self.framew/2,
+                               height= self.framew/2)
+
         cv2.imshow('frame', self.frame)
+        print('width', self.framew, "height", self.frameh)
         self.rect_sel = RectSelector('frame', self.onrect)
         self.trackers = []
         self.paused = paused
 
     def onrect(self, rect):
         frame_gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+        frame_gray = imutils.resize(frame_gray,
+                                    width=self.framew/2,
+                                    height= self.framew/2)
         tracker = MOSSE(frame_gray, rect)
         self.trackers.append(tracker)
 
@@ -166,10 +179,13 @@ class App:
 
         while True:
             if not self.paused:
-                ret, self.frame = self.cap.read()
-                if not ret:
-                    break
+                _, self.frame = self.cap.read()
+                self.frame = imutils.resize(self.frame,
+                                       width=self.framew/2,
+                                       height= self.framew/2)
+
                 frame_gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+
                 for tracker in self.trackers:
                     tracker.update(frame_gray)
 
@@ -194,15 +210,15 @@ class App:
             if ch == ord('c'):
                 self.trackers = []
 
-
 if __name__ == '__main__':
-    print (__doc__)
-    import sys, getopt
-    opts, args = getopt.getopt(sys.argv[1:], '', ['pause'])
-    opts = dict(opts)
-    try:
-        video_src = args[0]
-    except:
-        video_src = '0'
+    #print (__doc__)
+    ap = argparse.ArgumentParser()
 
-    App(video_src, paused = '--pause' in opts).run()
+    ap.add_argument("--pause", type=bool, default=True,
+        help="stop on first frame")
+    ap.add_argument("-v","--vid", required=True, type=str, default=None,
+        help="videofile")
+    args = vars(ap.parse_args())
+
+    cap = cv2.VideoCapture(args["vid"])
+    App(cap, paused = args["pause"]).run()
