@@ -153,6 +153,7 @@ class App:
         self.cap = cap
         _, self.frame = self.cap.read()
         self.frameh, self.framew, _ = self.frame.shape
+        self.original = self.frame
         self.frame = imutils.resize(self.frame,
                                width=self.framew/2,
                                height= self.framew/2)
