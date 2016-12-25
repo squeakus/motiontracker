@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=ShowOrb
+Comment=show Orb features on picam
+Exec=/home/pi/motiontracker/rundetector.sh orb
+Icon=applets-screenshooter-symbolic
+Path=/home/pi/motiontracker
+Terminal=true
+Type=Application
+Categories=Utility;Application;

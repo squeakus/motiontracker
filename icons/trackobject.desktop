@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=TrackObject
+Comment=follow object highlighted by user
+Exec=/home/pi/motiontracker/runtrackobject.sh
+Icon=applets-screenshooter-symbolic
+Path=/home/pi/motiontracker
+Terminal=true
+Type=Application
+Categories=Utility;Application;

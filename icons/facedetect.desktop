@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=FaceDetect
+Comment=tracks faces on picam
+Exec=/home/pi/motiontracker/runfacedetect.sh
+Icon=applets-screenshooter-symbolic
+Path=/home/pi/motiontracker
+Terminal=true
+Type=Application
+Categories=Utility;Application;

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=MotionTrack
+Comment=tracks average motion on picam
+Exec=/home/pi/motiontracker/runmotionpi.sh
+Icon=applets-screenshooter-symbolic
+Path=/home/pi/motiontracker
+Terminal=true
+Type=Application
+Categories=Utility;Application;
