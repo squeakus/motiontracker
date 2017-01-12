@@ -6,10 +6,11 @@ MOSSE tracking sample
 This sample implements correlation-based tracking approach, described in [1].
 
 Usage:
-  mosse.py [--pause] [<video source>]
+  mosse.py  [<video source>] [--pause] [--picam]
 
   --pause  -  Start with playback paused at the first video frame.
               Useful for tracking target selection.
+  --picam  -  Use this flag if using raspberry pi
 
   Draw rectangles around objects with a mouse to track them.
 
@@ -24,49 +25,56 @@ Keys:
 # Python 2/3 compatibility
 from __future__ import print_function
 import sys
+import argparse
+import imutils
+import cv2
+import time
+import numpy as np
+from imutils.video import VideoStream
+from common import draw_str, RectSelector
+
 PY3 = sys.version_info[0] == 3
 
 if PY3:
     xrange = range
 
-import numpy as np
-import cv2
-from common import draw_str, RectSelector
-import video
 
 def rnd_warp(a):
     h, w = a.shape[:2]
     T = np.zeros((2, 3))
     coef = 0.2
-    ang = (np.random.rand()-0.5)*coef
+    ang = (np.random.rand() - 0.5) * coef
     c, s = np.cos(ang), np.sin(ang)
-    T[:2, :2] = [[c,-s], [s, c]]
-    T[:2, :2] += (np.random.rand(2, 2) - 0.5)*coef
-    c = (w/2, h/2)
-    T[:,2] = c - np.dot(T[:2, :2], c)
-    return cv2.warpAffine(a, T, (w, h), borderMode = cv2.BORDER_REFLECT)
+    T[:2, :2] = [[c, -s], [s, c]]
+    T[:2, :2] += (np.random.rand(2, 2) - 0.5) * coef
+    c = (w / 2, h / 2)
+    T[:, 2] = c - np.dot(T[:2, :2], c)
+    return cv2.warpAffine(a, T, (w, h), borderMode=cv2.BORDER_REFLECT)
+
 
 def divSpec(A, B):
-    Ar, Ai = A[...,0], A[...,1]
-    Br, Bi = B[...,0], B[...,1]
-    C = (Ar+1j*Ai)/(Br+1j*Bi)
+    Ar, Ai = A[..., 0], A[..., 1]
+    Br, Bi = B[..., 0], B[..., 1]
+    C = (Ar + 1j * Ai) / (Br + 1j * Bi)
     C = np.dstack([np.real(C), np.imag(C)]).copy()
     return C
 
 eps = 1e-5
 
+
 class MOSSE:
+
     def __init__(self, frame, rect):
         x1, y1, x2, y2 = rect
-        w, h = map(cv2.getOptimalDFTSize, [x2-x1, y2-y1])
-        x1, y1 = (x1+x2-w)//2, (y1+y2-h)//2
-        self.pos = x, y = x1+0.5*(w-1), y1+0.5*(h-1)
+        w, h = map(cv2.getOptimalDFTSize, [x2 - x1, y2 - y1])
+        x1, y1 = (x1 + x2 - w) // 2, (y1 + y2 - h) // 2
+        self.pos = x, y = x1 + 0.5 * (w - 1), y1 + 0.5 * (h - 1)
         self.size = w, h
         img = cv2.getRectSubPix(frame, (w, h), (x, y))
 
         self.win = cv2.createHanningWindow((w, h), cv2.CV_32F)
         g = np.zeros((h, w), np.float32)
-        g[h//2, w//2] = 1
+        g[h // 2, w // 2] = 1
         g = cv2.GaussianBlur(g, (-1, -1), 2.0)
         g /= g.max()
 
@@ -77,11 +85,11 @@ class MOSSE:
             a = self.preprocess(rnd_warp(img))
             A = cv2.dft(a, flags=cv2.DFT_COMPLEX_OUTPUT)
             self.H1 += cv2.mulSpectrums(self.G, A, 0, conjB=True)
-            self.H2 += cv2.mulSpectrums(     A, A, 0, conjB=True)
+            self.H2 += cv2.mulSpectrums(A, A, 0, conjB=True)
         self.update_kernel()
         self.update(frame)
 
-    def update(self, frame, rate = 0.125):
+    def update(self, frame, rate=0.125):
         (x, y), (w, h) = self.pos, self.size
         self.last_img = img = cv2.getRectSubPix(frame, (w, h), (x, y))
         img = self.preprocess(img)
@@ -90,87 +98,124 @@ class MOSSE:
         if not self.good:
             return
 
-        self.pos = x+dx, y+dy
+        self.pos = x + dx, y + dy
         self.last_img = img = cv2.getRectSubPix(frame, (w, h), self.pos)
         img = self.preprocess(img)
 
         A = cv2.dft(img, flags=cv2.DFT_COMPLEX_OUTPUT)
         H1 = cv2.mulSpectrums(self.G, A, 0, conjB=True)
-        H2 = cv2.mulSpectrums(     A, A, 0, conjB=True)
-        self.H1 = self.H1 * (1.0-rate) + H1 * rate
-        self.H2 = self.H2 * (1.0-rate) + H2 * rate
+        H2 = cv2.mulSpectrums(A, A, 0, conjB=True)
+        self.H1 = self.H1 * (1.0 - rate) + H1 * rate
+        self.H2 = self.H2 * (1.0 - rate) + H2 * rate
         self.update_kernel()
 
     @property
     def state_vis(self):
-        f = cv2.idft(self.H, flags=cv2.DFT_SCALE | cv2.DFT_REAL_OUTPUT )
+        f = cv2.idft(self.H, flags=cv2.DFT_SCALE | cv2.DFT_REAL_OUTPUT)
         h, w = f.shape
-        f = np.roll(f, -h//2, 0)
-        f = np.roll(f, -w//2, 1)
-        kernel = np.uint8( (f-f.min()) / f.ptp()*255 )
+        f = np.roll(f, -h // 2, 0)
+        f = np.roll(f, -w // 2, 1)
+        kernel = np.uint8((f - f.min()) / f.ptp() * 255)
         resp = self.last_resp
-        resp = np.uint8(np.clip(resp/resp.max(), 0, 1)*255)
+        resp = np.uint8(np.clip(resp / resp.max(), 0, 1) * 255)
         vis = np.hstack([self.last_img, kernel, resp])
         return vis
 
     def draw_state(self, vis):
         (x, y), (w, h) = self.pos, self.size
-        x1, y1, x2, y2 = int(x-0.5*w), int(y-0.5*h), int(x+0.5*w), int(y+0.5*h)
+        x1, y1, x2, y2 = int(x - 0.5 * w), int(y - 0.5 *
+                                               h), int(x + 0.5 * w), int(y + 0.5 * h)
         cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 0, 255))
         if self.good:
             cv2.circle(vis, (int(x), int(y)), 2, (0, 0, 255), -1)
         else:
             cv2.line(vis, (x1, y1), (x2, y2), (0, 0, 255))
             cv2.line(vis, (x2, y1), (x1, y2), (0, 0, 255))
-        draw_str(vis, (x1, y2+16), 'PSR: %.2f' % self.psr)
+        draw_str(vis, (x1, y2 + 16), 'PSR: %.2f' % self.psr)
 
     def preprocess(self, img):
-        img = np.log(np.float32(img)+1.0)
-        img = (img-img.mean()) / (img.std()+eps)
-        return img*self.win
+        img = np.log(np.float32(img) + 1.0)
+        img = (img - img.mean()) / (img.std() + eps)
+        return img * self.win
 
     def correlate(self, img):
-        C = cv2.mulSpectrums(cv2.dft(img, flags=cv2.DFT_COMPLEX_OUTPUT), self.H, 0, conjB=True)
+        C = cv2.mulSpectrums(
+            cv2.dft(img, flags=cv2.DFT_COMPLEX_OUTPUT), self.H, 0, conjB=True)
         resp = cv2.idft(C, flags=cv2.DFT_SCALE | cv2.DFT_REAL_OUTPUT)
         h, w = resp.shape
         _, mval, _, (mx, my) = cv2.minMaxLoc(resp)
         side_resp = resp.copy()
-        cv2.rectangle(side_resp, (mx-5, my-5), (mx+5, my+5), 0, -1)
+        cv2.rectangle(side_resp, (mx - 5, my - 5), (mx + 5, my + 5), 0, -1)
         smean, sstd = side_resp.mean(), side_resp.std()
-        psr = (mval-smean) / (sstd+eps)
-        return resp, (mx-w//2, my-h//2), psr
+        psr = (mval - smean) / (sstd + eps)
+        return resp, (mx - w // 2, my - h // 2), psr
 
     def update_kernel(self):
         self.H = divSpec(self.H1, self.H2)
-        self.H[...,1] *= -1
+        self.H[..., 1] *= -1
+
 
 class App:
-    def __init__(self, video_src, paused = False):
-        self.cap = video.create_capture(video_src)
+
+    def __init__(self, cap, paused=False):
+        self.cap = cap
         _, self.frame = self.cap.read()
+        self.croph, self.cropw = 1080, 1920
+        self.frameh, self.framew, _ = self.frame.shape
+        self.original = self.frame
+        self.frame = imutils.resize(self.frame,
+                                    width=self.framew / 2,
+                                    height=self.framew / 2)
+
         cv2.imshow('frame', self.frame)
+
         self.rect_sel = RectSelector('frame', self.onrect)
         self.trackers = []
         self.paused = paused
 
     def onrect(self, rect):
         frame_gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+
         tracker = MOSSE(frame_gray, rect)
         self.trackers.append(tracker)
 
     def run(self):
         # Define the codec and create VideoWriter object
-        #fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         #the spec is for my webcam, the IP camera is 1920x1080
-        #out = cv2.VideoWriter('output.avi',fourcc, 30.0, (1920,1080))
+        out = cv2.VideoWriter('output.avi',fourcc, 30.0, (1920,1080))
 
         while True:
             if not self.paused:
                 ret, self.frame = self.cap.read()
-                if not ret:
+                self.original = self.frame
+                if self.frame is None:
+                    out.release()
+                    cv2.destroyAllWindows()
                     break
+
+                self.frame = imutils.resize(self.frame,
+                                            width=self.framew / 2,
+                                            height=self.framew / 2)
+
                 frame_gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
                 for tracker in self.trackers:
+                    x, y = tracker.pos[0]*2, tracker.pos[1]*2
+
+                    #remember you are cropping from 3840,2160
+                    if self.framew - (x + self.cropw/2) < 0:
+                        x = self.framew -self.cropw/2
+                    if self.frameh - (y + self.croph/2) < 0:
+                        y = self.frameh - self.croph/2
+                    if x - 960 < 0:
+                        x = 960
+                    if y - 540 < 0:
+                        y = 540
+                    subwin = cv2.getRectSubPix(self.original,
+                                               (self.cropw, self.croph),
+                                               (x,y))
+
+                    out.write(subwin)
                     tracker.update(frame_gray)
 
             vis = self.frame.copy()
@@ -181,28 +226,26 @@ class App:
             self.rect_sel.draw(vis)
 
             cv2.imshow('frame', vis)
-            #out.write(vis)
 
             ch = cv2.waitKey(10) & 0xFF
             if ch == 27:
-                #out.release()
+                out.release()
                 cv2.destroyAllWindows()
-                print("released out")
                 break
             if ch == ord(' '):
                 self.paused = not self.paused
             if ch == ord('c'):
                 self.trackers = []
 
-
 if __name__ == '__main__':
-    print (__doc__)
-    import sys, getopt
-    opts, args = getopt.getopt(sys.argv[1:], '', ['pause'])
-    opts = dict(opts)
-    try:
-        video_src = args[0]
-    except:
-        video_src = '0'
+    #print (__doc__)
+    ap = argparse.ArgumentParser()
 
-    App(video_src, paused = '--pause' in opts).run()
+    ap.add_argument("--pause", type=bool, default=True,
+                    help="stop on first frame")
+    ap.add_argument("-v", "--vid", required=True, type=str, default=None,
+                    help="videofile")
+    args = vars(ap.parse_args())
+
+    cap = cv2.VideoCapture(args["vid"])
+    App(cap, paused=args["pause"]).run()
